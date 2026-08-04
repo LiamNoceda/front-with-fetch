@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Spactial</title>
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f4f6f9; margin: 0; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 320px; }
+        h2 { text-align: center; color: #333; margin-bottom: 20px; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        .buttons-container { display: flex; gap: 10px; margin-top: 15px; }
+        button { flex: 1; padding: 12px; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold; transition: background 0.2s; }
+        .reg-btn { background-color: #28a745; } /* Зеленая */
+        .reg-btn:hover { background-color: #218838; }
+        .login-btn { background-color: #007bff; } /* Синяя */
+        .login-btn:hover { background-color: #0069d9; }
+        #message { margin-top: 15px; text-align: center; font-weight: bold; min-height: 20px; }
+    </style>
+</head>
+<body>
+    <div class="auth-spacial">
+        <h2>Spacial Auth</h2>
+        <form id="authForm" onsubmit="return false;">
+            <input type="text" id="username" placeholder="Name" required>
+            <input type="password" id="password" placeholder="Password (min 6 )" required>
+            <div class="button-mod">
+                <button type="button" class="reg-btn" onclick="sendRequest('register')">Sing In</button>
+                <button type="button" class="login-btn" onclick="sendRequest('login')">LogIn</button>
+            </div>
+        </form>
+        <div id="message"></div>
+    </div>
+
+    <script>
+    async function sendRequest(actionType) {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const messageDiv = document.getElementById('message');
+
+        // Простая валидация перед отправкой
+        if (!username || !password) {
+            messageDiv.style.color = 'red';
+            messageDiv.innerText = 'Заполните все поля!';
+            return;
+        }
+
+        // Определяем URL в зависимости от того, на какую кнопку нажали
+        const url = actionType === 'register' 
+            ? 'http://localhost:8081/auth/register' 
+            : 'http://localhost:8081/auth/register';
+
+        messageDiv.innerText = 'Отправка...';
+
+        try {
+            // Оба запроса отправляем методом POST с чистым JSON
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            // Обработка ответа для РЕГИСТРАЦИИ
+            if (actionType === 'register') {
+                if (response.status === 201) {
+                    const data = await response.json();
+                    messageDiv.style.color = 'green';
+                    messageDiv.innerText = `Успех! Аккаунт ${data.username} создан.`;
+                    document.getElementById('authForm').reset();
+                } else if (response.status === 409) {
+                    messageDiv.style.color = 'red';
+                    messageDiv.innerText = 'Ошибка: Пользователь уже существует.';
+                } else {
+                    messageDiv.style.color = 'red';
+                    messageDiv.innerText = 'Ошибка при регистрации.';
+                }
+            } 
+            // Обработка ответа для ВХОДА (ЛОГИНА)
+            else {
+                if (response.status === 200) {
+                    messageDiv.style.color = 'green';
+                    messageDiv.innerText = `Добро пожаловать, ${username}!`;
+                    document.getElementById('authForm').reset();
+                } else if (response.status === 401) {
+                    messageDiv.style.color = 'red';
+                    messageDiv.innerText = 'Ошибка: Неверное имя или пароль.';
+                } else {
+                    messageDiv.style.color = 'red';
+                    messageDiv.innerText = 'Ошибка сервера при входе.';
+                }
+            }
+
+        } catch (err) {
+            messageDiv.style.color = 'red';
+            messageDiv.innerText = 'Нет связи с сервером Rust.';
+            console.error(err);
+        }
+    }
+</script>
+</body>
+</html>
