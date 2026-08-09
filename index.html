@@ -61,6 +61,11 @@
             if (actionType === 'register') {
                 if (response.status === 201) {
                     const data = await response.json();
+                    
+                    if (data.token) {
+                        localStorage.setItem('token', data.token);
+                    }
+
                     messageDiv.style.color = 'green';
                     messageDiv.innerText = `Успех: ${data.message}`;
                     document.getElementById('authForm').reset();
