@@ -25,7 +25,7 @@
             <input type="text" id="username" placeholder="Name" required>
             <input type="password" id="password" placeholder="Password (min 8)" required>
             <div class="button-mod">
-                <button type="button" class="reg-btn" onclick="sendRequest('register')">Sign In</button>
+                <button type="button" class="reg-btn" onclick="sendRequest('register')">Register</button>
                 <button type="button" class="login-btn" onclick="sendRequest('login')">LogIn</button>
             </div>
         </form>
@@ -86,9 +86,12 @@
                     messageDiv.style.color = 'green';
                     messageDiv.innerText = `Добро пожаловать, ${username}!`;
                     document.getElementById('authForm').reset();
+                } else if (response.status === 401) { 
+                    messageDiv.style.color = 'red';
+                    messageDiv.innerText = 'Ошибка: Неверное имя пользователя или пароль.';
                 } else if (response.status === 400) {
                     messageDiv.style.color = 'red';
-                    messageDiv.innerText = 'Ошибка: Неверное имя или пароль.';
+                    messageDiv.innerText = 'Ошибка: Логин (2-55) или пароль (8-130) не соответствуют требованиям.';
                 } else {
                     messageDiv.style.color = 'red';
                     messageDiv.innerText = 'Ошибка сервера при входе.';
