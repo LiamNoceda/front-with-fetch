@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spatial Profile</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1e1e2e;
+            color: #cdd6f4;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background-color: #313244;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+        h1 { color: #89b4fa; margin-top: 0; font-size: 24px; }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #a6adc8;
+            font-size: 14px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            background-color: #181825;
+            border: 1px solid #45475a;
+            border-radius: 6px;
+            color: #cdd6f4;
+            font-size: 16px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #89b4fa;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: #89b4fa;
+            color: #11111b;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover { background-color: #b4befe; }
+        .result-box {
+            margin-top: 25px;
+            padding: 15px;
+            background-color: #181825;
+            border-radius: 6px;
+            border: 1px solid #45475a;
+            display: none;
+        }
+        .result-box h3 { margin-top: 0; font-size: 16px; }
+        .status-success { color: #a6e3a1; }
+        .status-error { color: #f38ba8; }
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Courier New', Courier, monospace;
+            color: #fab387;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Вызов get_spatial_handler</h1>
+    
+    <div class="form-group">
+        <label for="token">Mock JWT Токен (или строка авторизации):</label>
+        <input type="text" id="token" value="Bearer mock_token_xyz123" placeholder="Вставьте ваш токен сюда">
+    </div>
+
+    <button id="sendRequest">Отправить запрос на бэкенд</button>
+
+    <div id="resultContainer" class="result-box">
+        <h3 id="resultTitle">Ответ сервера</h3>
+        <pre id="jsonResponse"></pre>
+    </div>
+</div>
+
+<script>
+    document.getElementById('sendRequest').addEventListener('click', async () => {
+        const token = document.getElementById('token').value;
+        const resultContainer = document.getElementById('resultContainer');
+        const resultTitle = document.getElementById('resultTitle');
+        const jsonResponse = document.getElementById('jsonResponse');
+
+        resultContainer.style.display = 'block';
+        jsonResponse.textContent = 'Загрузка...';
+        resultTitle.className = '';
+
+        try {
+            const response = await fetch('/api/spatial', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token 
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                resultTitle.textContent = `Успешно (Статус: ${response.status})`;
+                resultTitle.className = 'status-success';
+                jsonResponse.textContent = JSON.stringify(data, null, 2);
+            } else {
+                resultTitle.textContent = `Ошибка (Статус: ${response.status})`;
+                resultTitle.className = 'status-error';
+                jsonResponse.textContent = JSON.stringify(data, null, 2);
+            }
+
+        } catch (error) {
+            resultTitle.textContent = 'Ошибка сети / Сервер недоступен';
+            resultTitle.className = 'status-error';
+            jsonResponse.textContent = error.message;
+        }
+    });
+</script>
+
+</body>
+</html>
