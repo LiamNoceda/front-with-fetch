@@ -3,139 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spatial Profile</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1e1e2e;
-            color: #cdd6f4;
-            margin: 0;
-            padding: 40px;
-            display: flex;
-            justify-content: center;
-        }
-        .container {
-            width: 100%;
-            max-width: 600px;
-            background-color: #313244;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-        }
-        h1 { color: #89b4fa; margin-top: 0; font-size: 24px; }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #a6adc8;
-            font-size: 14px;
-        }
-        input {
-            width: 100%;
-            padding: 12px;
-            box-sizing: border-box;
-            background-color: #181825;
-            border: 1px solid #45475a;
-            border-radius: 6px;
-            color: #cdd6f4;
-            font-size: 16px;
-        }
-        input:focus {
-            outline: none;
-            border-color: #89b4fa;
-        }
-        button {
-            width: 100%;
-            padding: 14px;
-            background-color: #89b4fa;
-            color: #11111b;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        button:hover { background-color: #b4befe; }
-        .result-box {
-            margin-top: 25px;
-            padding: 15px;
-            background-color: #181825;
-            border-radius: 6px;
-            border: 1px solid #45475a;
-            display: none;
-        }
-        .result-box h3 { margin-top: 0; font-size: 16px; }
-        .status-success { color: #a6e3a1; }
-        .status-error { color: #f38ba8; }
-        pre {
-            margin: 0;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            font-family: 'Courier New', Courier, monospace;
-            color: #fab387;
-        }
-    </style>
+    <title>Profile Spatial</title>
+    <script src="https://tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
 
-<div class="container">
-    <h1>Вызов get_spatial_handler</h1>
-    
-    <div class="form-group">
-        <label for="token">Mock JWT Токен (или строка авторизации):</label>
-        <input type="text" id="token" value="Bearer mock_token_xyz123" placeholder="Вставьте ваш токен сюда">
+    <div class="w-full max-w-xl bg-slate-800 p-8 rounded-2xl shadow-2xl border border-slate-700">
+        <header class="mb-6 flex justify-between items-start">
+            <div>
+                <h1 class="text-2xl font-bold text-emerald-400 tracking-tight">Profile Dashboard</h1>
+                <p class="text-sm text-slate-400 mt-1">Automated spatial synchronization engine.</p>
+            </div>
+            <span class="text-xs bg-emerald-950 border border-emerald-800 text-emerald-400 px-3 py-1 rounded-full font-medium">
+                Live Session
+            </span>
+        </header>
+        
+        <div class="space-y-4">
+            <div class="bg-slate-950 rounded-lg p-4 border border-slate-800">
+                <div class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                    Current Authentication Token Cache
+                </div>
+                <div id="tokenDisplay" class="text-xs font-mono text-indigo-300 break-all select-all max-h-16 overflow-y-auto bg-slate-900/50 p-2 rounded border border-slate-800/50">
+                    Checking memory store...
+                </div>
+            </div>
+
+            <div class="bg-slate-950 rounded-lg p-4 border border-slate-800">
+                <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-800">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Axum Pipeline Output</span>
+                    <span id="badgeStatus" class="text-xs px-2 py-0.5 rounded font-mono font-bold bg-slate-800 text-slate-400">IDLE</span>
+                </div>
+                <pre id="outputView" class="text-xs font-mono text-slate-400 overflow-x-auto whitespace-pre-wrap leading-relaxed">System standby. Waiting for token synchronization...</pre>
+            </div>
+        </div>
     </div>
 
-    <button id="sendRequest">Отправить запрос на бэкенд</button>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const tokenDisplay = document.getElementById('tokenDisplay');
+            const badgeStatus = document.getElementById('badgeStatus');
+            const outputView = document.getElementById('outputView');
 
-    <div id="resultContainer" class="result-box">
-        <h3 id="resultTitle">Ответ сервера</h3>
-        <pre id="jsonResponse"></pre>
-    </div>
-</div>
+            const urlParams = new URLSearchParams(window.location.search);
+            let rawToken = urlParams.get('token');
 
-<script>
-    document.getElementById('sendRequest').addEventListener('click', async () => {
-        const token = document.getElementById('token').value;
-        const resultContainer = document.getElementById('resultContainer');
-        const resultTitle = document.getElementById('resultTitle');
-        const jsonResponse = document.getElementById('jsonResponse');
-
-        resultContainer.style.display = 'block';
-        jsonResponse.textContent = 'Загрузка...';
-        resultTitle.className = '';
-
-        try {
-            const response = await fetch('/api/spatial', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': token 
-                }
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                resultTitle.textContent = `Успешно (Статус: ${response.status})`;
-                resultTitle.className = 'status-success';
-                jsonResponse.textContent = JSON.stringify(data, null, 2);
-            } else {
-                resultTitle.textContent = `Ошибка (Статус: ${response.status})`;
-                resultTitle.className = 'status-error';
-                jsonResponse.textContent = JSON.stringify(data, null, 2);
+            if (rawToken) {
+                localStorage.setItem('auth_token', `Bearer ${rawToken}`);
+                window.history.replaceState({}, document.title, window.location.pathname);
             }
 
-        } catch (error) {
-            resultTitle.textContent = 'Ошибка сети / Сервер недоступен';
-            resultTitle.className = 'status-error';
-            jsonResponse.textContent = error.message;
-        }
-    });
-</script>
+            const token = localStorage.getItem('auth_token');
 
+            if (!token) {
+                tokenDisplay.textContent = 'NO TOKEN DETECTED. Redirecting to login...';
+                tokenDisplay.className = 'text-xs font-mono text-rose-400';
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 2000);
+                return;
+            }
+
+            tokenDisplay.textContent = token;
+
+            badgeStatus.textContent = 'PENDING';
+            badgeStatus.className = 'text-xs px-2 py-0.5 rounded font-mono font-bold bg-slate-800 text-slate-300';
+            outputView.textContent = '// Dispatching localized upsert query to Axum instance...';
+
+            try {
+                const response = await fetch('/api/spatial', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Authorization': token
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    badgeStatus.textContent = `HTTP ${response.status} OK`;
+                    badgeStatus.className = 'text-xs px-2 py-0.5 rounded font-mono font-bold bg-emerald-950 text-emerald-400';
+                    outputView.className = 'text-xs font-mono text-emerald-400';
+                } else {
+                    badgeStatus.textContent = `HTTP ${response.status} ERROR`;
+                    badgeStatus.className = 'text-xs px-2 py-0.5 rounded font-mono font-bold bg-rose-950 text-rose-400';
+                    outputView.className = 'text-xs font-mono text-rose-400';
+                }
+
+                outputView.textContent = JSON.stringify(data, null, 2);
+
+            } catch (error) {
+                badgeStatus.textContent = 'NETWORK FAILURE';
+                badgeStatus.className = 'text-xs px-2 py-0.5 rounded font-mono font-bold bg-amber-950 text-amber-400';
+                outputView.className = 'text-xs font-mono text-amber-400';
+                outputView.textContent = `[Error]: Failure reaching Axum instance.\nReason: ${error.message}`;
+            }
+        });
+    </script>
 </body>
 </html>
