@@ -1,29 +1,74 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Auth Spatial</title>
     <style>
-        body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f4f6f9; margin: 0; }
-        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 320px; }
-        h2 { text-align: center; color: #333; margin-bottom: 20px; }
-        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-        .button-mod { display: flex; gap: 10px; margin-top: 15px; }
-        button { flex: 1; padding: 12px; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold; transition: background 0.2s; }
+        body { 
+            font-family: Arial, sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            background-color: #f4f6f9; 
+            margin: 0; 
+        }
+        .card { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08); 
+            width: 320px; 
+        }
+        h2 { 
+            text-align: center; 
+            color: #333; 
+            margin-bottom: 20px; 
+        }
+        input { 
+            width: 100%; 
+            padding: 10px; 
+            margin: 10px 0; 
+            border: 1px solid #ccc; 
+            border-radius: 6px; 
+            box-sizing: border-box; 
+        }
+        .button-mod { 
+            display: flex; 
+            gap: 10px; 
+            margin-top: 15px; 
+        }
+        button { 
+            flex: 1; 
+            padding: 12px; 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 14px; 
+            font-weight: bold; 
+            transition: background 0.2s; 
+        }
         .reg-btn { background-color: #28a745; }
         .reg-btn:hover { background-color: #218838; }
         .login-btn { background-color: #007bff; }
         .login-btn:hover { background-color: #0069d9; }
-        #message { margin-top: 15px; text-align: center; font-weight: bold; min-height: 20px; }
+        #message { 
+            margin-top: 15px; 
+            text-align: center; 
+            font-weight: bold; 
+            min-height: 20px; 
+        }
     </style>
 </head>
 <body>
+
     <div class="card">
         <h2>Spatial Auth</h2>
         <form id="authForm" onsubmit="return false;">
-            <input type="text" id="username" placeholder="Name" required>
-            <input type="password" id="password" placeholder="Password (min 8)" required>
+            <input type="text" id="username" placeholder="Имя" required>
+            <input type="password" id="password" placeholder="Пароль (мин 8)" required>
             <div class="button-mod">
                 <button type="button" class="reg-btn" onclick="sendRequest('register')">Register</button>
                 <button type="button" class="login-btn" onclick="sendRequest('login')">LogIn</button>
@@ -33,13 +78,8 @@
     </div>
 
     <script>
-    let refreshInterval;
-    window.onload = function() {
-        startTokenRefreshLoop();
-    };
-
     async function sendRequest(actionType) {
-        const username = document.getElementById('username').value;
+        const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value;
         const messageDiv = document.getElementById('message');
 
@@ -49,10 +89,10 @@
             return;
         }
 
+        // Адрес строго на бэкенд Axum (с префиксом /api)
         const url = actionType === 'register' 
             ? 'http://localhost:8081/api/auth/register' 
             : 'http://localhost:8081/api/auth/login';
-
         messageDiv.style.color = 'black';
         messageDiv.innerText = 'Отправка...';
 
@@ -65,47 +105,15 @@
 
             const data = await response.json();
 
-            if (actionType === 'register') {
-                if (response.status === 201) {
-                    localStorage.setItem('access_token', data.access_token);
-                    localStorage.setItem('refresh_token', data.refresh_token);
-
-                    messageDiv.style.color = 'green';
-                    messageDiv.innerText = `Успех: ${data.message}`;
-                    document.getElementById('authForm').reset();
-                    
-                    startTokenRefreshLoop();
-                } else if (response.status === 409) {
-                    messageDiv.style.color = 'red';
-                    messageDiv.innerText = 'Ошибка: Пользователь уже существует.';
-                } else if (response.status === 400) {
-                    messageDiv.style.color = 'red';
-                    messageDiv.innerText = 'Ошибка: Неверная длина логина (2-55) или пароля (8-130).';
-                } else {
-                    messageDiv.style.color = 'red';
-                    messageDiv.innerText = data.error || 'Ошибка при регистрации.';
-                }
-            } 
-            else {
-                if (response.status === 200) {
-                    localStorage.setItem('access_token', data.access_token);
-                    localStorage.setItem('refresh_token', data.refresh_token);
-
-                    messageDiv.style.color = 'green';
-                    messageDiv.innerText = `Добро пожаловать, ${username}!`;
-                    document.getElementById('authForm').reset();
-
-                    startTokenRefreshLoop();
-                } else if (response.status === 401) { 
-                    messageDiv.style.color = 'red';
-                    messageDiv.innerText = 'Ошибка: Неверное имя пользователя или пароль.';
-                } else if (response.status === 400) {
-                    messageDiv.style.color = 'red';
-                    messageDiv.innerText = 'Ошибка: Логин (2-55) или пароль (8-130) не соответствуют требованиям.';
-                } else {
-                    messageDiv.style.color = 'red';
-                    messageDiv.innerText = data.error || 'Ошибка сервера при входе.';
-                }
+            if (response.ok) {
+                // Если статус 200 (Login) или 201 (Register)
+                messageDiv.style.color = 'green';
+                messageDiv.innerText = data.message || 'Успешно!';
+                document.getElementById('authForm').reset();
+            } else {
+                // Если сервер вернул ошибку через структуру ApiResponse { error }
+                messageDiv.style.color = 'red';
+                messageDiv.innerText = data.error || 'Произошла ошибка на сервере.';
             }
 
         } catch (err) {
@@ -114,42 +122,7 @@
             console.error(err);
         }
     }
-
-    async function refreshTokens() {
-        const refreshToken = localStorage.getItem('refresh_token');
-        if (!refreshToken) return;
-
-        try {
-            const response = await fetch('http://localhost:8081/api/auth/refresh', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ refresh_token: refreshToken })
-            });
-
-            if (response.status === 200) {
-                const data = await response.json();
-                localStorage.setItem('access_token', data.access_token);
-                localStorage.setItem('refresh_token', data.refresh_token);
-                console.log('Токены успешно обновлены в фоновом режиме');
-            } else {
-                console.warn('Сессия устарела. Требуется повторный вход.');
-                localStorage.removeItem('access_token');
-                localStorage.removeItem('refresh_token');
-                clearInterval(refreshInterval);
-            }
-        } catch (err) {
-            console.error('Ошибка фонового обновления токенов:', err);
-        }
-    }
-
-    function startTokenRefreshLoop() {
-        if (refreshInterval) clearInterval(refreshInterval);
-        
-        if (localStorage.getItem('refresh_token')) {
-            refreshInterval = setInterval(refreshTokens, 840000);
-        }
-    }
-</script>
+    </script>
 
 </body>
 </html>
